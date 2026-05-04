@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IGugas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root{
+  --s-work-bg:#DBEAFE;--s-work-bd:#93C5FD;--s-work-tx:#1D4ED8;--s-work-solid:#3B82F6;
+  --s-remote-bg:#D1FAE5;--s-remote-bd:#6EE7B7;--s-remote-tx:#065F46;--s-remote-solid:#10B981;
+  --s-rest-bg:#FEF9C3;--s-rest-bd:#FDE047;--s-rest-tx:#854D0E;--s-rest-solid:#EAB308;
+  --s-vacation-bg:#FCE7F3;--s-vacation-bd:#F9A8D4;--s-vacation-tx:#9D174D;--s-vacation-solid:#EC4899;
+  --s-study-bg:#FFEDD5;--s-study-bd:#FDBA74;--s-study-tx:#9A3412;--s-study-solid:#F97316;
+  --s-event-bg:#FEE2E2;--s-event-bd:#FCA5A5;--s-event-tx:#991B1B;--s-event-solid:#EF4444;
+  --bg:#F3F4F6;--surface:#fff;--border:#E5E7EB;--border2:#D1D5DB;
+  --text:#111827;--muted:#6B7280;--orange:#F97316;
+  --cell-h:72px;--cell-w:90px;--label-w:114px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* ── HEADER ── */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:0 18px;display:flex;align-items:center;gap:12px;height:54px;flex-shrink:0;z-index:200}
+.logo{font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:-.5px;white-space:nowrap;color:var(--text)}
+.logo b{color:var(--orange);font-weight:400}
+
+.nav{display:flex;align-items:center;gap:6px}
+.nav-lbl{font-size:13px;font-weight:600;min-width:150px;text-align:center}
+.ibtn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);transition:all .15s}
+.ibtn:hover{background:#F3F4F6;color:var(--text)}
+.btn{padding:6px 13px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--text);transition:all .15s;font-family:inherit;white-space:nowrap}
+.btn:hover{background:#F3F4F6}
+.btn-dark{background:var(--text);color:#fff;border-color:var(--text)}
+.btn-dark:hover{background:#374151}
+.legend{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);white-space:nowrap}
+.leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+
+/* ── STATUS BAR ── */
+.statusbar{height:28px;flex-shrink:0;display:flex;align-items:center;padding:0 18px;gap:12px;font-size:11px;border-bottom:1px solid var(--border);background:var(--surface)}
+.sb-sync{display:flex;align-items:center;gap:5px;color:var(--muted)}
+.sb-dot{width:7px;height:7px;border-radius:50%;background:#9CA3AF;flex-shrink:0;transition:background .3s}
+.sb-dot.ok{background:#10B981}
+.sb-dot.err{background:#EF4444}
+.sb-dot.syncing{background:#F97316;animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── COPY BAR ── */
+.cpbar{background:#EFF6FF;border-bottom:1px solid #BFDBFE;padding:6px 18px;font-size:12px;color:#1E40AF;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.cpbar.hidden{display:none}
+.cp-x{cursor:pointer;margin-left:auto;font-weight:600;opacity:.7}
+.cp-x:hover{opacity:1}
+
+/* ── MAIN ── */
+.app{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.cal-wrap{flex:1;overflow:auto}
+
+/* ── MONTH TABLE ── */
+.month-table{display:inline-flex;flex-direction:column;min-height:100%}
+.month-head-row{display:flex;position:sticky;top:0;z-index:50;background:var(--surface);border-bottom:2px solid var(--border2);flex-shrink:0}
+.month-body{display:flex;flex-direction:column}
+.person-row{display:flex;border-bottom:1px solid var(--border)}
+.person-row:last-child{border-bottom:none}
+.plabel{width:var(--label-w);min-width:var(--label-w);flex-shrink:0;display:flex;align-items:center;gap:7px;padding:0 8px;border-right:2px solid var(--border2);background:var(--surface);position:sticky;left:0;z-index:20;height:var(--cell-h)}
+.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.pname{font-size:12px;font-weight:500;line-height:1.2}
+.h-corner{width:var(--label-w);min-width:var(--label-w);flex-shrink:0;border-right:2px solid var(--border2);position:sticky;left:0;z-index:60;background:var(--surface)}
+.week-group{display:flex;flex-shrink:0}
+.week-sep{width:5px;min-width:5px;background:var(--border2);opacity:.5;flex-shrink:0}
+
+/* ── DAY HEADERS ── */
+.dhead{width:var(--cell-w);min-width:var(--cell-w);padding:5px 4px;text-align:center;border-right:1px solid var(--border);flex-shrink:0}
+.dhead:last-child{border-right:none}
+.dhead-name{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+.dhead-num{font-size:16px;font-weight:600;color:var(--text);line-height:1.2}
+.dhead.is-today .dhead-name,.dhead.is-today .dhead-num{color:var(--orange)}
+.dhead.is-weekend .dhead-name,.dhead.is-weekend .dhead-num{color:#9CA3AF}
+
+/* ── DAY CELL ── */
+.dcell{width:var(--cell-w);min-width:var(--cell-w);height:var(--cell-h);position:relative;border-right:1px solid var(--border);flex-shrink:0;cursor:pointer;overflow:hidden}
+.dcell:last-child{border-right:none}
+.dcell.is-today{background:rgba(249,115,22,.04)}
+.dcell.is-weekend{background:rgba(0,0,0,.012)}
+.dcell.copy-src::after{content:'';position:absolute;inset:0;border:2.5px solid #3B82F6;border-radius:0;z-index:10;pointer-events:none}
+
+/* ── SHIFT BLOCKS ── */
+/* Single shift: fills whole cell */
+.shift{position:absolute;border-radius:6px;border:1.5px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:filter .12s;overflow:hidden}
+.shift:hover{filter:brightness(.92)}
+.shift.single{inset:3px}
+/* Dual shifts: top half / bottom half */
+.shift.top{top:3px;left:3px;right:3px;bottom:50%;border-bottom-left-radius:2px;border-bottom-right-radius:2px;margin-bottom:1px}
+.shift.bottom{top:50%;left:3px;right:3px;bottom:3px;border-top-left-radius:2px;border-top-right-radius:2px;margin-top:1px}
+.shift-lbl{font-weight:600;text-align:center;padding:0 4px;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.25;font-size:12px}
+.shift-sub{font-size:9px;opacity:.6;text-align:center;padding:0 3px;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+
+/* shift colours */
+.s-work{background:var(--s-work-bg);border-color:var(--s-work-bd);color:var(--s-work-tx)}
+.s-remote{background:var(--s-remote-bg);border-color:var(--s-remote-bd);color:var(--s-remote-tx)}
+.s-rest{background:var(--s-rest-bg);border-color:var(--s-rest-bd);color:var(--s-rest-tx)}
+.s-vacation{background:var(--s-vacation-bg);border-color:var(--s-vacation-bd);color:var(--s-vacation-tx)}
+.s-study{background:var(--s-study-bg);border-color:var(--s-study-bd);color:var(--s-study-tx)}
+.s-event{background:var(--s-event-bg);border-color:var(--s-event-bd);color:var(--s-event-tx)}
+.dcell.is-today .shift.single{box-shadow:0 0 0 2px var(--orange)}
+
+/* empty cell */
+.empty-cell{position:absolute;inset:3px;border-radius:6px;border:1.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--border2);transition:all .12s}
+.dcell:hover .empty-cell{border-color:#9CA3AF;color:#9CA3AF;background:rgba(0,0,0,.018)}
+
+
+
+/* ── CONTEXT MENU ── */
+.ctx{position:fixed;background:#fff;border:1px solid var(--border);border-radius:9px;box-shadow:0 8px 28px rgba(0,0,0,.15);z-index:900;padding:5px;min-width:178px}
+.cxi{padding:8px 12px;border-radius:6px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text)}
+.cxi:hover{background:#F3F4F6}
+.cxi.red{color:#DC2626}
+.cxi.red:hover{background:#FEF2F2}
+.ctx-sep{height:1px;background:var(--border);margin:4px 0}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal{background:#fff;border-radius:14px;padding:24px;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.22);position:relative;display:flex;flex-direction:column}
+.modal h2{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:2px}
+.msub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.fg{margin-bottom:13px}
+.fl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;display:block}
+.fi{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;color:var(--text);outline:none;transition:border-color .15s}
+.fi:focus{border-color:#93C5FD}
+.dr{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* tarde expand toggle */
+.tarde-toggle{display:flex;align-items:center;gap:6px;margin-bottom:10px;cursor:pointer;user-select:none;color:var(--muted);font-size:12px;font-weight:500;padding:7px 10px;border-radius:7px;border:1.5px dashed var(--border2);transition:all .15s;width:100%}
+.tarde-toggle:hover{border-color:var(--border);color:var(--text);background:var(--bg)}
+.tarde-toggle.active{border-style:solid;border-color:var(--border2);color:var(--text);background:var(--bg)}
+.tarde-remove{margin-left:auto;font-size:11px;color:#EF4444;cursor:pointer;padding:2px 6px;border-radius:4px}
+.tarde-remove:hover{background:#FEE2E2}
+/* type grid */
+.type-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.topt{padding:9px 6px;border-radius:7px;border:2px solid transparent;cursor:pointer;font-size:11px;font-weight:500;text-align:center;transition:all .15s;line-height:1.3}
+.topt.sel{filter:brightness(.88);border-color:currentColor}
+.topt.t-work{background:var(--s-work-bg);color:var(--s-work-tx)}
+.topt.t-remote{background:var(--s-remote-bg);color:var(--s-remote-tx)}
+.topt.t-rest{background:var(--s-rest-bg);color:var(--s-rest-tx)}
+.topt.t-vacation{background:var(--s-vacation-bg);color:var(--s-vacation-tx)}
+.topt.t-study{background:var(--s-study-bg);color:var(--s-study-tx)}
+.topt.t-event{background:var(--s-event-bg);color:var(--s-event-tx)}
+.hint{font-size:11px;color:var(--muted);margin-top:3px}
+.macts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+/* draggable modal */
+.modal-drag-handle{height:22px;margin:-24px -24px 14px -24px;border-radius:14px 14px 0 0;background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:grab;user-select:none;flex-shrink:0}
+.modal-drag-handle:active{cursor:grabbing}
+.modal-drag-pip{width:36px;height:4px;border-radius:2px;background:var(--border2)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="logo">IGugas<b>.</b></div>
+  <div class="nav">
+    <button class="ibtn" onclick="nav(-1)">&#8249;</button>
+    <span class="nav-lbl" id="period-label"></span>
+    <button class="ibtn" onclick="nav(1)">&#8250;</button>
+    <button class="btn" onclick="goToday()">Hoje</button>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:var(--s-work-solid)"></div>Trabalho</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--s-remote-solid)"></div>Trab. Fora</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--s-rest-solid)"></div>Descanço</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--s-vacation-solid)"></div>Férias</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--s-study-solid)"></div>Estudo</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--s-event-solid)"></div>Evento</div>
+  </div>
+  <button class="btn btn-dark" style="margin-left:auto" onclick="openModal(null,null)">+ Adicionar</button>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div class="sb-sync">
+    <div class="sb-dot" id="sync-dot"></div>
+    <span id="sync-msg">A ligar…</span>
+  </div>
+</div>
+
+<!-- COPY BAR -->
+<div class="cpbar hidden" id="cpbar">
+  <span id="cp-msg">📋 Clica noutra célula para colar</span>
+  <span class="cp-x" onclick="clearCopy()">✕ Cancelar</span>
+</div>
+
+<div class="app">
+  <div class="cal-wrap"><div id="cal"></div></div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx" id="ctx" style="display:none" onclick="event.stopPropagation()">
+  <div class="cxi" id="ctx-edit"  onclick="ctxEdit()">✏️ Editar</div>
+  <div class="cxi" id="ctx-add2"  onclick="ctxAdd2()">🌅 Adicionar período de Tarde</div>
+  <div class="cxi" id="ctx-copy-item" onclick="ctxCopy()">📋 Copiar <small style="opacity:.45;font-size:10px;margin-left:4px">Ctrl+C</small></div>
+  <div class="ctx-sep"></div>
+  <div class="cxi red" id="ctx-del" onclick="ctxDelete()">🗑️ Apagar</div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" style="display:none" onclick="overlayClick(event)">
+  <div class="modal" id="modal" onclick="event.stopPropagation()">
+    <div class="modal-drag-handle" id="modal-drag-handle"><div class="modal-drag-pip"></div></div>
+    <h2 id="m-title">Nova entrada</h2>
+    <div class="msub" id="m-sub"></div>
+
+    <div class="fg">
+      <label class="fl">Pessoa</label>
+      <select class="fi" id="f-person">
+        <option value="0">José</option>
+        <option value="1">Liliana</option>
+        <option value="2">Tomás</option>
+        <option value="3">Afonso</option>
+        <option value="4">Marta</option>
+      </select>
+    </div>
+
+    <!-- MANHÃ — always shown -->
+    <div class="fg">
+      <label class="fl">Tipo — Manhã</label>
+      <div class="type-row" id="type-row-0"></div>
+    </div>
+    <div class="fg">
+      <label class="fl">Etiqueta</label>
+      <input type="text" class="fi" id="f-label-0" placeholder="Ex: Remoto Lisboa, Reunião… (opcional)">
+    </div>
+
+    <!-- TARDE — collapsed by default, expand on demand -->
+    <div class="fg">
+      <button class="tarde-toggle" id="tarde-toggle" onclick="toggleTarde()">
+        <span id="tarde-toggle-icon">＋</span>
+        <span id="tarde-toggle-lbl">Dividir o dia em Manhã / Tarde</span>
+        <span class="tarde-remove" id="tarde-remove" onclick="event.stopPropagation();clearTarde()" style="display:none">✕ Remover tarde</span>
+      </button>
+      <div id="tarde-panel" style="display:none">
+        <div class="fg" style="margin-bottom:10px">
+          <label class="fl">Tipo — Tarde</label>
+          <div class="type-row" id="type-row-1"></div>
+        </div>
+        <div class="fg">
+          <label class="fl">Etiqueta tarde</label>
+          <input type="text" class="fi" id="f-label-1" placeholder="Ex: Evento, Férias… (opcional)">
+        </div>
+      </div>
+    </div>
+
+    <div class="fg" style="margin-top:4px">
+      <label class="fl">Datas</label>
+      <div class="dr">
+        <input type="date" class="fi" id="f-start">
+        <input type="date" class="fi" id="f-end">
+      </div>
+      <div class="hint">Para um só dia, preenche ambas com a mesma data</div>
+    </div>
+
+    <div class="macts">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-dark" onclick="saveEntry()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+// ════════════════════════════════════════════════════════════════════
+//  ⚙️  CONFIGURAÇÃO FIREBASE — substitui os valores abaixo pelos teus
+//  1. Vai a https://console.firebase.google.com
+//  2. Cria projeto → Realtime Database → Modo de teste
+//  3. Copia o databaseURL e cola aqui
+// ════════════════════════════════════════════════════════════════════
+const FIREBASE_DB_URL = "https://igugas-default-rtdb.europe-west1.firebasedatabase.app/"; // ← MUDA AQUI
+
+// ─── Firebase REST helpers ────────────────────────────────────────
+const DB = FIREBASE_DB_URL.replace(/\/$/, '');
+const PATH = '/igugas_entries';
+
+function setSyncState(state, msg) {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-msg');
+  dot.className = 'sb-dot ' + state;
+  txt.textContent = msg;
+}
+
+async function fbGet() {
+  const r = await fetch(`${DB}${PATH}.json`);
+  if (!r.ok) throw new Error('GET failed');
+  return r.json();
+}
+async function fbPut(data) {
+  const r = await fetch(`${DB}${PATH}.json`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('PUT failed');
+  return r.json();
+}
+
+// ─── Polling for real-time updates ───────────────────────────────
+let lastHash = '';
+async function poll() {
+  try {
+    const data = await fbGet();
+    const h = JSON.stringify(data);
+    if (h !== lastHash) {
+      lastHash = h;
+      window._loadFromFirebase(data);
+    }
+    setSyncState('ok', 'Sincronizado ✓');
+  } catch (e) {
+    setSyncState('err', 'Erro de ligação — a tentar…');
+  }
+}
+
+window._saveToFirebase = async function(entries) {
+  setSyncState('syncing', 'A guardar…');
+  try {
+    await fbPut(entries);
+    lastHash = JSON.stringify(entries);
+    setSyncState('ok', 'Guardado ✓');
+  } catch (e) {
+    setSyncState('err', 'Erro ao guardar');
+    console.error(e);
+  }
+};
+
+// Initial load + polling every 10s
+try {
+  const initData = await fbGet();
+  lastHash = JSON.stringify(initData);
+  window._loadFromFirebase(initData);
+  setSyncState('ok', 'Sincronizado ✓');
+} catch (e) {
+  setSyncState('err', 'Firebase não configurado — a usar cache local');
+  window._firebaseError = true;
+  // Firebase unavailable — fall back to localStorage
+  window._localFallbackInit();
+}
+setInterval(poll, 10000);
+</script>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  APP LOGIC
+// ════════════════════════════════════════════════════════════════════
+const PERSONS = [
+  {name:'José',    init:'JO', ac:'#DBEAFE', at:'#1D4ED8'},
+  {name:'Liliana', init:'LI', ac:'#FCE7F3', at:'#9D174D'},
+  {name:'Tomás',   init:'TM', ac:'#D1FAE5', at:'#065F46'},
+  {name:'Afonso',  init:'AF', ac:'#EDE9FE', at:'#5B21B6'},
+  {name:'Marta',   init:'MA', ac:'#FEF3C7', at:'#92400E'},
+];
+const TYPES = [
+  {key:'work',    label:'Trabalho',      cls:'s-work',    tcls:'t-work',    icon:'💼'},
+  {key:'remote',  label:'Trabalho Fora', cls:'s-remote',  tcls:'t-remote',  icon:'🌿'},
+  {key:'rest',    label:'Descanço',      cls:'s-rest',    tcls:'t-rest',    icon:'☀️'},
+  {key:'vacation',label:'Férias',        cls:'s-vacation',tcls:'t-vacation',icon:'🏖️'},
+  {key:'study',   label:'Estudo',        cls:'s-study',   tcls:'t-study',   icon:'📖'},
+  {key:'event',   label:'Evento',        cls:'s-event',   tcls:'t-event',   icon:'🎉'},
+];
+const PT_M   = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const PT_DS  = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom']; // Monday-first
+const PT_DL  = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+
+let cursor      = new Date(); cursor.setDate(1);
+let entries     = [];
+let editId      = null;
+let selType     = ['work', null]; // [manhã, tarde]
+let copyCell    = null;
+let ctxData     = null;
+let focusedCell = null;
+
+// ── firebase bridge ────────────────────────────────────────────────
+window._loadFromFirebase = function(data) {
+  let loaded = [];
+  if (Array.isArray(data)) {
+    loaded = data.filter(Boolean);
+  } else if (data && typeof data === 'object') {
+    loaded = Object.values(data).filter(Boolean);
+  }
+
+  entries = loaded;
+
+  // If Firebase came back empty, run prepopulate and push to Firebase
+  if (entries.length === 0) {
+    prepopulate();  // fills entries and calls save() → pushes to Firebase
+  } else {
+    try { localStorage.setItem('igugas_v2', JSON.stringify(entries)); } catch(e){}
+    render();
+  }
+};
+
+function save() {
+  try { localStorage.setItem('igugas_v2', JSON.stringify(entries)); } catch(e){}
+  if (window._saveToFirebase) window._saveToFirebase(entries);
+}
+
+function load() {
+  try { entries = JSON.parse(localStorage.getItem('igugas_v2') || '[]'); } catch { entries = []; }
+}
+
+// ── Date helpers ───────────────────────────────────────────────────
+function makeDk(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function parseDk(k)       { const [y,m,d]=k.split('-').map(Number); return {y,m:m-1,d}; }
+function todayDk()        { const t=new Date(); return makeDk(t.getFullYear(),t.getMonth(),t.getDate()); }
+function datesInRange(s, e) {
+  const a=new Date(s+'T00:00:00'), b=new Date((e||s)+'T00:00:00'), out=[];
+  for(let c=new Date(a); c<=b; c.setDate(c.getDate()+1))
+    out.push(makeDk(c.getFullYear(), c.getMonth(), c.getDate()));
+  return out;
+}
+function monDay(jsDay) { return (jsDay+6)%7; } // Mon=0..Sun=6
+function newId()       { return Date.now()+'_'+Math.random().toString(36).slice(2); }
+function typeOf(key)   { return TYPES.find(t=>t.key===key) || TYPES[0]; }
+
+function getEntry(pi, dk) {
+  return entries.find(e => e.person===pi && datesInRange(e.dateStart, e.dateEnd).includes(dk)) || null;
+}
+
+function removeForDay(pi, dk) {
+  const toAdd = [];
+  entries = entries.filter(e => {
+    if (e.person !== pi) return true;
+    const days = datesInRange(e.dateStart, e.dateEnd);
+    if (!days.includes(dk)) return true;
+    if (e.dateStart===dk && e.dateEnd===dk) return false;
+    if (e.dateStart===dk) { e.dateStart=shiftDay(dk,1); return true; }
+    if (e.dateEnd===dk)   { e.dateEnd=shiftDay(dk,-1);  return true; }
+    toAdd.push({...e, id:newId(), dateEnd:shiftDay(dk,-1)});
+    e.dateStart = shiftDay(dk,1); return true;
+  });
+  entries.push(...toAdd);
+}
+
+function shiftDay(dk, delta) {
+  const d = new Date(dk+'T00:00:00'); d.setDate(d.getDate()+delta);
+  return makeDk(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+// ── Marta preset ───────────────────────────────────────────────────
+// May 4 → Jun 30: weekdays = Estudo, weekends = Descanço
+// Jul 1 → Dec 31: every day = Descanço
+// Everyone else: weekdays = Trabalho, weekends = Descanço
+function prepopulate() {
+  const MARTA_PI = 4;
+  const start   = new Date('2026-05-04T00:00:00');
+  const endYear = new Date('2026-12-31T00:00:00');
+  const endJun  = new Date('2026-06-30T00:00:00');
+  const startJul= new Date('2026-07-01T00:00:00');
+
+  for (let c=new Date(start); c<=endYear; c.setDate(c.getDate()+1)) {
+    const isWE = c.getDay()===0 || c.getDay()===6;
+    const dk   = makeDk(c.getFullYear(), c.getMonth(), c.getDate());
+
+    PERSONS.forEach((_,pi) => {
+      if (getEntry(pi, dk)) return; // don't overwrite existing
+
+      let type;
+      if (pi === MARTA_PI) {
+        if (c <= endJun) {
+          type = isWE ? 'rest' : 'study';   // May–Jun
+        } else {
+          type = 'rest';                     // Jul–Dec all days
+        }
+      } else {
+        type = isWE ? 'rest' : 'work';       // everyone else
+      }
+
+      entries.push({id:newId(), person:pi, dateStart:dk, dateEnd:dk,
+        type, type2:null, label:'', label2:''});
+    });
+  }
+
+  save();
+  render();
+}
+
+// ── View / Nav ─────────────────────────────────────────────────────
+function nav(d) { cursor.setMonth(cursor.getMonth()+d); render(); }
+function goToday() { cursor=new Date(); cursor.setDate(1); render(); }
+
+// ── Render ─────────────────────────────────────────────────────────
+function render() { renderMonth(document.getElementById('cal')); }
+
+// Compute font size based on label character length
+function lblSize(text) {
+  const len = text.length;
+  if (len <= 10) return '12px';
+  if (len <= 16) return '11px';
+  if (len <= 22) return '10px';
+  return '9px';
+}
+
+// Build the HTML for a cell's shift content
+function shiftContent(entry) {
+  if (!entry) return `<div class="empty-cell">+</div>`;
+
+  const t1   = typeOf(entry.type);
+  const lbl1 = entry.label || t1.label;
+
+  if (!entry.type2) {
+    return `<div class="shift single ${t1.cls}">
+      <div class="shift-lbl" style="font-size:${lblSize(lbl1)}">${t1.icon} ${lbl1}</div>
+    </div>`;
+  }
+
+  // Dual — top=manhã, bottom=tarde
+  const t2   = typeOf(entry.type2);
+  const lbl2 = entry.label2 || t2.label;
+  return `
+    <div class="shift top ${t1.cls}" title="Manhã: ${lbl1}">
+      <div class="shift-lbl" style="font-size:${lblSize(lbl1)}">${t1.icon} ${lbl1}</div>
+    </div>
+    <div class="shift bottom ${t2.cls}" title="Tarde: ${lbl2}">
+      <div class="shift-lbl" style="font-size:${lblSize(lbl2)}">${t2.icon} ${lbl2}</div>
+    </div>`;
+}
+
+function cellClasses(dkStr, pi, baseClass) {
+  const tk = todayDk();
+  const d  = new Date(dkStr+'T00:00:00');
+  const isToday  = dkStr===tk;
+  const isWE     = d.getDay()===0||d.getDay()===6;
+  const isCopySrc= copyCell && copyCell.pi===pi && copyCell.dk===dkStr;
+  return `${baseClass}${isToday?' is-today':''}${isWE?' is-weekend':''}${isCopySrc?' copy-src':''}`;
+}
+
+// ── MONTH VIEW ─────────────────────────────────────────────────────
+function renderMonth(g) {
+  const y=cursor.getFullYear(), m=cursor.getMonth();
+  document.getElementById('period-label').textContent = `${PT_M[m]} ${y}`;
+  const dim = new Date(y,m+1,0).getDate();
+  const tk  = todayDk();
+
+  const days = [];
+  for (let d=1; d<=dim; d++) {
+    const dk     = makeDk(y,m,d);
+    const jsDay  = new Date(y,m,d).getDay();
+    days.push({d, dk, jsDay, isWE:jsDay===0||jsDay===6, isToday:dk===tk});
+  }
+
+  // Group Mon→Sun weeks
+  const weeks = [];
+  let wk = [];
+  days.forEach(day => {
+    const md = monDay(day.jsDay);
+    if (md===0 && wk.length>0) { weeks.push(wk); wk=[]; }
+    wk.push(day);
+  });
+  if (wk.length) weeks.push(wk);
+
+  // ── Header ──
+  let head = `<div class="month-head-row"><div class="h-corner"></div>`;
+  weeks.forEach((wk, wi) => {
+    if (wi>0) head += `<div class="week-sep" style="align-self:stretch"></div>`;
+    head += `<div class="week-group">`;
+    buildSlots(wk).forEach(day => {
+      if (!day) {
+        head += `<div class="dhead" style="visibility:hidden"><div class="dhead-name">—</div><div class="dhead-num">—</div></div>`;
+      } else {
+        const mn = monDay(day.jsDay);
+        head += `<div class="dhead${day.isToday?' is-today':''}${day.isWE?' is-weekend':''}">
+          <div class="dhead-name">${PT_DS[mn]}</div>
+          <div class="dhead-num">${day.d}</div>
+        </div>`;
+      }
+    });
+    head += `</div>`;
+  });
+  head += `</div>`;
+
+  // ── Body ──
+  let body = `<div class="month-body">`;
+  PERSONS.forEach((p, pi) => {
+    body += `<div class="person-row">`;
+    body += `<div class="plabel"><div class="avatar" style="background:${p.ac};color:${p.at}">${p.init}</div><div class="pname">${p.name}</div></div>`;
+    weeks.forEach((wk, wi) => {
+      if (wi>0) body += `<div class="week-sep"></div>`;
+      body += `<div class="week-group">`;
+      buildSlots(wk).forEach(day => {
+        if (!day) {
+          body += `<div class="dcell" style="background:var(--bg);cursor:default;pointer-events:none"></div>`;
+          return;
+        }
+        const entry = getEntry(pi, day.dk);
+        body += `<div class="${cellClasses(day.dk, pi, 'dcell')}"
+          onclick="cellClick(${pi},'${day.dk}')"
+          oncontextmenu="cellCtx(event,${pi},'${day.dk}')">${shiftContent(entry)}</div>`;
+      });
+      body += `</div>`;
+    });
+    body += `</div>`;
+  });
+  body += `</div>`;
+
+  g.innerHTML = `<div class="month-table">${head}${body}</div>`;
+}
+
+function buildSlots(wk) {
+  const slots = new Array(7).fill(null);
+  wk.forEach(day => { slots[monDay(day.jsDay)] = day; });
+  return slots;
+}
+
+// ── Cell interaction ───────────────────────────────────────────────
+function cellClick(pi, dk) {
+  closeCtx();
+  focusedCell = {pi, dk};
+  if (copyCell) {
+    if (copyCell.pi===pi && copyCell.dk===dk) { clearCopy(); return; }
+    pasteToCell(pi, dk);
+    return;
+  }
+  openModal(pi, dk);
+}
+
+function pasteToCell(pi, dk) {
+  const src = copyCell.entry;
+  if (src) {
+    removeForDay(pi, dk);
+    entries.push({...src, id:newId(), person:pi, dateStart:dk, dateEnd:dk});
+    save(); render();
+  }
+  clearCopy();
+}
+
+// ── Context menu ───────────────────────────────────────────────────
+function cellCtx(e, pi, dk) {
+  e.preventDefault(); e.stopPropagation();
+  closeCtx();
+  focusedCell = {pi, dk};
+  const entry = getEntry(pi, dk);
+  ctxData = {pi, dk, entry};
+  const ctx = document.getElementById('ctx');
+  ctx.style.display = 'block';
+  ctx.style.left = Math.min(e.clientX, window.innerWidth-200)+'px';
+  ctx.style.top  = Math.min(e.clientY, window.innerHeight-160)+'px';
+  document.getElementById('ctx-edit').style.display      = entry ? 'flex' : 'none';
+  document.getElementById('ctx-add2').style.display      = entry && !entry.type2 ? 'flex' : 'none';
+  document.getElementById('ctx-copy-item').style.display = entry ? 'flex' : 'none';
+  document.getElementById('ctx-del').style.display       = entry ? 'flex' : 'none';
+}
+function closeCtx() { document.getElementById('ctx').style.display='none'; ctxData=null; }
+document.addEventListener('click', () => closeCtx());
+
+function ctxEdit()   { if (ctxData?.entry) openModal(ctxData.pi, ctxData.dk, ctxData.entry); closeCtx(); }
+function ctxAdd2()   { if (ctxData?.entry) openModal(ctxData.pi, ctxData.dk, ctxData.entry, true); closeCtx(); }
+function ctxDelete() {
+  if (!ctxData?.entry) return;
+  removeForDay(ctxData.pi, ctxData.dk); save(); render(); closeCtx();
+}
+function ctxCopy() {
+  if (!ctxData?.entry) { closeCtx(); return; }
+  startCopy(ctxData.pi, ctxData.dk, ctxData.entry); closeCtx();
+}
+
+function startCopy(pi, dk, entry) {
+  const p = PERSONS[pi], t = typeOf(entry.type);
+  copyCell = {pi, dk, entry: {...entry}};
+  document.getElementById('cp-msg').innerHTML =
+    `📋 Copiado <strong>${entry.label||t.label}</strong> de <strong>${p.name}</strong> — clica noutra célula para colar &nbsp;·&nbsp; <kbd style="background:#BFDBFE;border-radius:4px;padding:1px 5px;font-family:inherit;font-size:11px">Esc</kbd> para cancelar`;
+  document.getElementById('cpbar').classList.remove('hidden');
+  render();
+}
+function clearCopy() {
+  copyCell = null;
+  document.getElementById('cpbar').classList.add('hidden');
+  render();
+}
+
+// ── Keyboard shortcuts ─────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (document.getElementById('overlay').style.display !== 'none') return;
+  const key = e.key.toLowerCase();
+  if ((e.ctrlKey||e.metaKey) && key==='c') {
+    if (focusedCell) { const entry=getEntry(focusedCell.pi,focusedCell.dk); if(entry){e.preventDefault();startCopy(focusedCell.pi,focusedCell.dk,entry);} }
+    return;
+  }
+  if ((e.ctrlKey||e.metaKey) && key==='v') {
+    if (copyCell && focusedCell && (copyCell.pi!==focusedCell.pi || copyCell.dk!==focusedCell.dk)) {
+      e.preventDefault(); pasteToCell(focusedCell.pi, focusedCell.dk);
+    }
+    return;
+  }
+  if (key==='escape') clearCopy();
+});
+
+// ── Modal ──────────────────────────────────────────────────────────
+function buildTypeGrid(slotIdx) {
+  const cur = selType[slotIdx] || 'work';
+  document.getElementById(`type-row-${slotIdx}`).innerHTML = TYPES.map(t =>
+    `<div class="topt ${t.tcls}${cur===t.key?' sel':''}" onclick="pickType(${slotIdx},'${t.key}')">${t.icon} ${t.label}</div>`
+  ).join('');
+}
+function pickType(slotIdx, key) { selType[slotIdx]=key; buildTypeGrid(slotIdx); }
+
+// ── Tarde expand/collapse ──────────────────────────────────────────
+function toggleTarde() {
+  const panel  = document.getElementById('tarde-panel');
+  const toggle = document.getElementById('tarde-toggle');
+  const icon   = document.getElementById('tarde-toggle-icon');
+  const lbl    = document.getElementById('tarde-toggle-lbl');
+  const rem    = document.getElementById('tarde-remove');
+  const isOpen = panel.style.display !== 'none';
+  if (isOpen) {
+    clearTarde();
+  } else {
+    panel.style.display = '';
+    toggle.classList.add('active');
+    icon.textContent = '▾';
+    lbl.textContent  = 'Tarde';
+    rem.style.display = '';
+    if (!selType[1]) { selType[1]='work'; buildTypeGrid(1); }
+    setTimeout(() => document.getElementById('f-label-1').focus(), 80);
+  }
+}
+
+function clearTarde() {
+  selType[1] = null;
+  document.getElementById('f-label-1').value = '';
+  document.getElementById('tarde-panel').style.display = 'none';
+  document.getElementById('tarde-toggle').classList.remove('active');
+  document.getElementById('tarde-toggle-icon').textContent = '＋';
+  document.getElementById('tarde-toggle-lbl').textContent  = 'Dividir o dia em Manhã / Tarde';
+  document.getElementById('tarde-remove').style.display = 'none';
+}
+
+function openTarde() {
+  // Open the tarde panel (used when entry already has type2)
+  const panel  = document.getElementById('tarde-panel');
+  const toggle = document.getElementById('tarde-toggle');
+  panel.style.display = '';
+  toggle.classList.add('active');
+  document.getElementById('tarde-toggle-icon').textContent = '▾';
+  document.getElementById('tarde-toggle-lbl').textContent  = 'Tarde';
+  document.getElementById('tarde-remove').style.display = '';
+}
+
+function openModal(pi, dk, entry, forceTarde=false) {
+  editId = entry ? entry.id : null;
+  selType = [entry ? entry.type : 'work', entry ? (entry.type2||null) : null];
+
+  document.getElementById('m-title').textContent = entry ? 'Editar entrada' : 'Nova entrada';
+  if (dk) { const p=parseDk(dk); document.getElementById('m-sub').textContent=`${p.d} de ${PT_M[p.m]} de ${p.y}`; }
+  else document.getElementById('m-sub').textContent = '';
+
+  document.getElementById('f-person').value  = pi ?? 0;
+  document.getElementById('f-start').value   = dk || (entry ? entry.dateStart : todayDk());
+  document.getElementById('f-end').value     = dk || (entry ? entry.dateEnd   : todayDk());
+  document.getElementById('f-label-0').value = entry ? (entry.label  || '') : '';
+  document.getElementById('f-label-1').value = entry ? (entry.label2 || '') : '';
+
+  buildTypeGrid(0);
+  buildTypeGrid(1);
+
+  // Reset tarde panel state first
+  clearTarde();
+  // Then open it if the entry already has a type2, or if forced
+  if ((entry && entry.type2) || forceTarde) {
+    if (forceTarde && !selType[1]) selType[1] = 'work';
+    buildTypeGrid(1);
+    openTarde();
+  }
+
+  document.getElementById('overlay').style.display = 'flex';
+  if (window._resetModalPos) window._resetModalPos();
+  setTimeout(() => document.getElementById('f-label-0').focus(), 100);
+}
+
+function closeModal() { document.getElementById('overlay').style.display='none'; editId=null; }
+
+function saveEntry() {
+  const pi     = parseInt(document.getElementById('f-person').value);
+  const start  = document.getElementById('f-start').value;
+  const end    = document.getElementById('f-end').value || start;
+  const label  = document.getElementById('f-label-0').value.trim();
+  const label2 = document.getElementById('f-label-1').value.trim();
+  if (!start) { alert('Escolhe uma data.'); return; }
+  if (editId) entries = entries.filter(e => e.id!==editId);
+  datesInRange(start, end).forEach(d => removeForDay(pi, d));
+  entries.push({
+    id: newId(), person: pi,
+    dateStart: start, dateEnd: end,
+    type: selType[0] || 'work',
+    type2: selType[1] || null,
+    label, label2
+  });
+  save(); closeModal(); render();
+}
+
+// ── Modal drag ─────────────────────────────────────────────────────
+(function() {
+  let dragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
+  let modalX = 0, modalY = 0; // offset from centre
+
+  function getModal()   { return document.getElementById('modal'); }
+  function getOverlay() { return document.getElementById('overlay'); }
+
+  function applyPos() {
+    const m = getModal();
+    m.style.transform = `translate(${modalX}px, ${modalY}px)`;
+  }
+
+  document.addEventListener('mousedown', e => {
+    const handle = document.getElementById('modal-drag-handle');
+    if (!handle || !handle.contains(e.target)) return;
+    dragging = true;
+    startX = e.clientX; startY = e.clientY;
+    origX  = modalX;    origY  = modalY;
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    modalX = origX + (e.clientX - startX);
+    modalY = origY + (e.clientY - startY);
+    applyPos();
+  });
+
+  document.addEventListener('mouseup', () => {
+    dragging = false;
+    document.body.style.userSelect = '';
+  });
+
+  // Touch support
+  document.addEventListener('touchstart', e => {
+    const handle = document.getElementById('modal-drag-handle');
+    if (!handle || !handle.contains(e.target)) return;
+    dragging = true;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    origX  = modalX;               origY  = modalY;
+  }, {passive:true});
+
+  document.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    modalX = origX + (e.touches[0].clientX - startX);
+    modalY = origY + (e.touches[0].clientY - startY);
+    applyPos();
+  }, {passive:true});
+
+  document.addEventListener('touchend', () => { dragging = false; });
+
+  // Reset position when modal opens
+  window._resetModalPos = function() { modalX = 0; modalY = 0; applyPos(); };
+})();
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+// Firebase module calls _loadFromFirebase (online) or _localFallbackInit (offline).
+// Neither path runs until the module resolves, so no race condition.
+window._localFallbackInit = function() {
+  load();
+  if (entries.length === 0) prepopulate();
+  else render();
+};
+</script>
+</body>
+</html>
