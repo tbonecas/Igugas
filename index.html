@@ -167,7 +167,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   <div class="legend">
     <div class="leg"><div class="leg-dot" style="background:var(--s-work-solid)"></div>Trabalho</div>
     <div class="leg"><div class="leg-dot" style="background:var(--s-remote-solid)"></div>Trab. Fora</div>
-    <div class="leg"><div class="leg-dot" style="background:var(--s-rest-solid)"></div>Descanço</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--s-rest-solid)"></div>Descanso</div>
     <div class="leg"><div class="leg-dot" style="background:var(--s-vacation-solid)"></div>Férias</div>
     <div class="leg"><div class="leg-dot" style="background:var(--s-study-solid)"></div>Estudo</div>
     <div class="leg"><div class="leg-dot" style="background:var(--s-event-solid)"></div>Evento</div>
@@ -358,7 +358,7 @@ const PERSONS = [
 const TYPES = [
   {key:'work',    label:'Trabalho',      cls:'s-work',    tcls:'t-work',    icon:'💼'},
   {key:'remote',  label:'Trabalho Fora', cls:'s-remote',  tcls:'t-remote',  icon:'🌿'},
-  {key:'rest',    label:'Descanço',      cls:'s-rest',    tcls:'t-rest',    icon:'☀️'},
+  {key:'rest',    label:'Descanso',      cls:'s-rest',    tcls:'t-rest',    icon:'☀️'},
   {key:'vacation',label:'Férias',        cls:'s-vacation',tcls:'t-vacation',icon:'🏖️'},
   {key:'study',   label:'Estudo',        cls:'s-study',   tcls:'t-study',   icon:'📖'},
   {key:'event',   label:'Evento',        cls:'s-event',   tcls:'t-event',   icon:'🎉'},
@@ -443,9 +443,9 @@ function shiftDay(dk, delta) {
 }
 
 // ── Marta preset ───────────────────────────────────────────────────
-// May 4 → Jun 30: weekdays = Estudo, weekends = Descanço
-// Jul 1 → Dec 31: every day = Descanço
-// Everyone else: weekdays = Trabalho, weekends = Descanço
+// May 4 → Jun 30: weekdays = Estudo, weekends = Descanso
+// Jul 1 → Dec 31: every day = Descanso
+// Everyone else: weekdays = Trabalho, weekends = Descanso
 function prepopulate() {
   const MARTA_PI = 4;
   const start   = new Date('2026-05-04T00:00:00');
