@@ -24,7 +24,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:0 18px;display:flex;align-items:center;gap:12px;height:54px;flex-shrink:0;z-index:200}
 .logo{font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:-.5px;white-space:nowrap;color:var(--text)}
 .logo b{color:var(--orange);font-weight:400}
-
 .nav{display:flex;align-items:center;gap:6px}
 .nav-lbl{font-size:13px;font-weight:600;min-width:150px;text-align:center}
 .ibtn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);transition:all .15s}
@@ -85,14 +84,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .dcell.copy-src::after{content:'';position:absolute;inset:0;border:2.5px solid #3B82F6;border-radius:0;z-index:10;pointer-events:none}
 
 /* ── SHIFT BLOCKS ── */
-/* Single shift: fills whole cell */
 .shift{position:absolute;border-radius:6px;border:1.5px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:filter .12s;overflow:hidden}
 .shift:hover{filter:brightness(.92)}
 .shift.single{inset:3px}
-/* Dual shifts: top half / bottom half */
 .shift.top{top:3px;left:3px;right:3px;bottom:50%;border-bottom-left-radius:2px;border-bottom-right-radius:2px;margin-bottom:1px}
 .shift.bottom{top:50%;left:3px;right:3px;bottom:3px;border-top-left-radius:2px;border-top-right-radius:2px;margin-top:1px}
-.shift-lbl{font-weight:600;text-align:center;padding:0 4px;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.25;font-size:12px}
+.shift-lbl{font-weight:600;text-align:center;padding:0 3px;width:100%;overflow:hidden;white-space:normal;word-break:break-word;line-height:1.2;font-size:12px}
 .shift-sub{font-size:9px;opacity:.6;text-align:center;padding:0 3px;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 
 /* shift colours */
@@ -108,7 +105,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .empty-cell{position:absolute;inset:3px;border-radius:6px;border:1.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--border2);transition:all .12s}
 .dcell:hover .empty-cell{border-color:#9CA3AF;color:#9CA3AF;background:rgba(0,0,0,.018)}
 
-
+/* note icon on cell */
+.note-icon{position:absolute;top:4px;right:9px;z-index:5;pointer-events:none;width:14px;height:11px;}
 
 /* ── CONTEXT MENU ── */
 .ctx{position:fixed;background:#fff;border:1px solid var(--border);border-radius:9px;box-shadow:0 8px 28px rgba(0,0,0,.15);z-index:900;padding:5px;min-width:178px}
@@ -146,7 +144,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .topt.t-event{background:var(--s-event-bg);color:var(--s-event-tx)}
 .hint{font-size:11px;color:var(--muted);margin-top:3px}
 .macts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-
+/* notas */
+.fi-notes{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;color:var(--text);outline:none;transition:border-color .15s;resize:vertical;min-height:72px}
+.fi-notes:focus{border-color:#93C5FD}
 /* draggable modal */
 .modal-drag-handle{height:22px;margin:-24px -24px 14px -24px;border-radius:14px 14px 0 0;background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:grab;user-select:none;flex-shrink:0}
 .modal-drag-handle:active{cursor:grabbing}
@@ -230,7 +230,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <input type="text" class="fi" id="f-label-0" placeholder="Ex: Remoto Lisboa, Reunião… (opcional)">
     </div>
 
-    <!-- TARDE — collapsed by default, expand on demand -->
+    <!-- TARDE — collapsed by default -->
     <div class="fg">
       <button class="tarde-toggle" id="tarde-toggle" onclick="toggleTarde()">
         <span id="tarde-toggle-icon">＋</span>
@@ -258,6 +258,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="hint">Para um só dia, preenche ambas com a mesma data</div>
     </div>
 
+    <!-- NOTAS -->
+    <div class="fg">
+      <label class="fl">✉️ Notas</label>
+      <textarea class="fi-notes" id="f-notes" placeholder="Escreve aqui notas livres para este dia… (não aparece no calendário)"></textarea>
+    </div>
+
     <div class="macts">
       <button class="btn" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-dark" onclick="saveEntry()">Guardar</button>
@@ -267,15 +273,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 <!-- FIREBASE SDK -->
 <script type="module">
-// ════════════════════════════════════════════════════════════════════
-//  ⚙️  CONFIGURAÇÃO FIREBASE — substitui os valores abaixo pelos teus
-//  1. Vai a https://console.firebase.google.com
-//  2. Cria projeto → Realtime Database → Modo de teste
-//  3. Copia o databaseURL e cola aqui
-// ════════════════════════════════════════════════════════════════════
-const FIREBASE_DB_URL = "https://igugas-default-rtdb.europe-west1.firebasedatabase.app/"; // ← MUDA AQUI
+const FIREBASE_DB_URL = "https://igugas-default-rtdb.europe-west1.firebasedatabase.app/";
 
-// ─── Firebase REST helpers ────────────────────────────────────────
 const DB = FIREBASE_DB_URL.replace(/\/$/, '');
 const PATH = '/igugas_entries';
 
@@ -301,7 +300,6 @@ async function fbPut(data) {
   return r.json();
 }
 
-// ─── Polling for real-time updates ───────────────────────────────
 let lastHash = '';
 async function poll() {
   try {
@@ -329,7 +327,6 @@ window._saveToFirebase = async function(entries) {
   }
 };
 
-// Initial load + polling every 10s
 try {
   const initData = await fbGet();
   lastHash = JSON.stringify(initData);
@@ -338,16 +335,12 @@ try {
 } catch (e) {
   setSyncState('err', 'Firebase não configurado — a usar cache local');
   window._firebaseError = true;
-  // Firebase unavailable — fall back to localStorage
   window._localFallbackInit();
 }
 setInterval(poll, 10000);
 </script>
 
 <script>
-// ════════════════════════════════════════════════════════════════════
-//  APP LOGIC
-// ════════════════════════════════════════════════════════════════════
 const PERSONS = [
   {name:'José',    init:'JO', ac:'#DBEAFE', at:'#1D4ED8'},
   {name:'Liliana', init:'LI', ac:'#FCE7F3', at:'#9D174D'},
@@ -357,25 +350,24 @@ const PERSONS = [
 ];
 const TYPES = [
   {key:'work',    label:'Trabalho',      cls:'s-work',    tcls:'t-work',    icon:'💼'},
-  {key:'remote',  label:'Trabalho Fora', cls:'s-remote',  tcls:'t-remote',  icon:'🌿'},
+  {key:'remote',  label:'Trabalho Fora', cls:'s-remote',  tcls:'t-remote',  icon:'✈️'},
   {key:'rest',    label:'Descanso',      cls:'s-rest',    tcls:'t-rest',    icon:'☀️'},
   {key:'vacation',label:'Férias',        cls:'s-vacation',tcls:'t-vacation',icon:'🏖️'},
   {key:'study',   label:'Estudo',        cls:'s-study',   tcls:'t-study',   icon:'📖'},
   {key:'event',   label:'Evento',        cls:'s-event',   tcls:'t-event',   icon:'🎉'},
 ];
-const PT_M   = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const PT_DS  = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom']; // Monday-first
-const PT_DL  = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const PT_M  = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const PT_DS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 
 let cursor      = new Date(); cursor.setDate(1);
 let entries     = [];
 let editId      = null;
-let selType     = ['work', null]; // [manhã, tarde]
+let selType     = ['work', null];
 let copyCell    = null;
 let ctxData     = null;
 let focusedCell = null;
 
-// ── firebase bridge ────────────────────────────────────────────────
+// ── Firebase bridge ────────────────────────────────────────────────
 window._loadFromFirebase = function(data) {
   let loaded = [];
   if (Array.isArray(data)) {
@@ -383,12 +375,9 @@ window._loadFromFirebase = function(data) {
   } else if (data && typeof data === 'object') {
     loaded = Object.values(data).filter(Boolean);
   }
-
   entries = loaded;
-
-  // If Firebase came back empty, run prepopulate and push to Firebase
   if (entries.length === 0) {
-    prepopulate();  // fills entries and calls save() → pushes to Firebase
+    prepopulate();
   } else {
     try { localStorage.setItem('igugas_v2', JSON.stringify(entries)); } catch(e){}
     render();
@@ -414,7 +403,7 @@ function datesInRange(s, e) {
     out.push(makeDk(c.getFullYear(), c.getMonth(), c.getDate()));
   return out;
 }
-function monDay(jsDay) { return (jsDay+6)%7; } // Mon=0..Sun=6
+function monDay(jsDay) { return (jsDay+6)%7; }
 function newId()       { return Date.now()+'_'+Math.random().toString(36).slice(2); }
 function typeOf(key)   { return TYPES.find(t=>t.key===key) || TYPES[0]; }
 
@@ -442,74 +431,61 @@ function shiftDay(dk, delta) {
   return makeDk(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-// ── Marta preset ───────────────────────────────────────────────────
-// May 4 → Jun 30: weekdays = Estudo, weekends = Descanso
-// Jul 1 → Dec 31: every day = Descanso
-// Everyone else: weekdays = Trabalho, weekends = Descanso
+// ── Prepopulate ────────────────────────────────────────────────────
 function prepopulate() {
   const MARTA_PI = 4;
-  const start   = new Date('2026-05-04T00:00:00');
-  const endYear = new Date('2026-12-31T00:00:00');
-  const endJun  = new Date('2026-06-30T00:00:00');
-  const startJul= new Date('2026-07-01T00:00:00');
+  const start    = new Date('2026-05-04T00:00:00');
+  const endYear  = new Date('2026-12-31T00:00:00');
+  const endJun   = new Date('2026-06-30T00:00:00');
 
   for (let c=new Date(start); c<=endYear; c.setDate(c.getDate()+1)) {
     const isWE = c.getDay()===0 || c.getDay()===6;
     const dk   = makeDk(c.getFullYear(), c.getMonth(), c.getDate());
-
     PERSONS.forEach((_,pi) => {
-      if (getEntry(pi, dk)) return; // don't overwrite existing
-
+      if (getEntry(pi, dk)) return;
       let type;
       if (pi === MARTA_PI) {
-        if (c <= endJun) {
-          type = isWE ? 'rest' : 'study';   // May–Jun
-        } else {
-          type = 'rest';                     // Jul–Dec all days
-        }
+        type = (c <= endJun) ? (isWE ? 'rest' : 'study') : 'rest';
       } else {
-        type = isWE ? 'rest' : 'work';       // everyone else
+        type = isWE ? 'rest' : 'work';
       }
-
-      entries.push({id:newId(), person:pi, dateStart:dk, dateEnd:dk,
-        type, type2:null, label:'', label2:''});
+      entries.push({id:newId(), person:pi, dateStart:dk, dateEnd:dk, type, type2:null, label:'', label2:'', notes:''});
     });
   }
-
   save();
   render();
 }
 
-// ── View / Nav ─────────────────────────────────────────────────────
+// ── Nav ────────────────────────────────────────────────────────────
 function nav(d) { cursor.setMonth(cursor.getMonth()+d); render(); }
 function goToday() { cursor=new Date(); cursor.setDate(1); render(); }
 
 // ── Render ─────────────────────────────────────────────────────────
 function render() { renderMonth(document.getElementById('cal')); }
 
-// Compute font size based on label character length
 function lblSize(text) {
-  const len = text.length;
-  if (len <= 10) return '12px';
-  if (len <= 16) return '11px';
-  if (len <= 22) return '10px';
-  return '9px';
+  const len = (text||'').length;
+  if (len <= 7)  return '12px';
+  if (len <= 11) return '11px';
+  if (len <= 15) return '10px';
+  if (len <= 20) return '9px';
+  return '8px';
 }
 
-// Build the HTML for a cell's shift content
 function shiftContent(entry) {
   if (!entry) return `<div class="empty-cell">+</div>`;
 
   const t1   = typeOf(entry.type);
   const lbl1 = entry.label || t1.label;
+  const hasNote = entry.notes && entry.notes.trim() !== '';
+  const noteIcon = hasNote ? `<div class="note-icon"><svg viewBox="0 0 20 15" xmlns="http://www.w3.org/2000/svg" width="14" height="11"><rect x="0" y="0" width="20" height="15" rx="2" fill="white" stroke="#c5221f" stroke-width="1.2"/><polyline points="0,0 10,9 20,0" fill="none" stroke="#c5221f" stroke-width="1.8" stroke-linejoin="round"/></svg></div>` : '';
 
   if (!entry.type2) {
     return `<div class="shift single ${t1.cls}">
       <div class="shift-lbl" style="font-size:${lblSize(lbl1)}">${t1.icon} ${lbl1}</div>
-    </div>`;
+    </div>${noteIcon}`;
   }
 
-  // Dual — top=manhã, bottom=tarde
   const t2   = typeOf(entry.type2);
   const lbl2 = entry.label2 || t2.label;
   return `
@@ -518,19 +494,18 @@ function shiftContent(entry) {
     </div>
     <div class="shift bottom ${t2.cls}" title="Tarde: ${lbl2}">
       <div class="shift-lbl" style="font-size:${lblSize(lbl2)}">${t2.icon} ${lbl2}</div>
-    </div>`;
+    </div>${noteIcon}`;
 }
 
 function cellClasses(dkStr, pi, baseClass) {
-  const tk = todayDk();
-  const d  = new Date(dkStr+'T00:00:00');
-  const isToday  = dkStr===tk;
-  const isWE     = d.getDay()===0||d.getDay()===6;
-  const isCopySrc= copyCell && copyCell.pi===pi && copyCell.dk===dkStr;
+  const isToday   = dkStr===todayDk();
+  const d         = new Date(dkStr+'T00:00:00');
+  const isWE      = d.getDay()===0||d.getDay()===6;
+  const isCopySrc = copyCell && copyCell.pi===pi && copyCell.dk===dkStr;
   return `${baseClass}${isToday?' is-today':''}${isWE?' is-weekend':''}${isCopySrc?' copy-src':''}`;
 }
 
-// ── MONTH VIEW ─────────────────────────────────────────────────────
+// ── Month view ─────────────────────────────────────────────────────
 function renderMonth(g) {
   const y=cursor.getFullYear(), m=cursor.getMonth();
   document.getElementById('period-label').textContent = `${PT_M[m]} ${y}`;
@@ -539,12 +514,11 @@ function renderMonth(g) {
 
   const days = [];
   for (let d=1; d<=dim; d++) {
-    const dk     = makeDk(y,m,d);
-    const jsDay  = new Date(y,m,d).getDay();
+    const dk    = makeDk(y,m,d);
+    const jsDay = new Date(y,m,d).getDay();
     days.push({d, dk, jsDay, isWE:jsDay===0||jsDay===6, isToday:dk===tk});
   }
 
-  // Group Mon→Sun weeks
   const weeks = [];
   let wk = [];
   days.forEach(day => {
@@ -554,7 +528,6 @@ function renderMonth(g) {
   });
   if (wk.length) weeks.push(wk);
 
-  // ── Header ──
   let head = `<div class="month-head-row"><div class="h-corner"></div>`;
   weeks.forEach((wk, wi) => {
     if (wi>0) head += `<div class="week-sep" style="align-self:stretch"></div>`;
@@ -574,7 +547,6 @@ function renderMonth(g) {
   });
   head += `</div>`;
 
-  // ── Body ──
   let body = `<div class="month-body">`;
   PERSONS.forEach((p, pi) => {
     body += `<div class="person-row">`;
@@ -616,7 +588,8 @@ function cellClick(pi, dk) {
     pasteToCell(pi, dk);
     return;
   }
-  openModal(pi, dk);
+  // Always pass existing entry so modal pre-populates all fields
+  openModal(pi, dk, getEntry(pi, dk));
 }
 
 function pasteToCell(pi, dk) {
@@ -699,7 +672,6 @@ function buildTypeGrid(slotIdx) {
 }
 function pickType(slotIdx, key) { selType[slotIdx]=key; buildTypeGrid(slotIdx); }
 
-// ── Tarde expand/collapse ──────────────────────────────────────────
 function toggleTarde() {
   const panel  = document.getElementById('tarde-panel');
   const toggle = document.getElementById('tarde-toggle');
@@ -731,7 +703,6 @@ function clearTarde() {
 }
 
 function openTarde() {
-  // Open the tarde panel (used when entry already has type2)
   const panel  = document.getElementById('tarde-panel');
   const toggle = document.getElementById('tarde-toggle');
   panel.style.display = '';
@@ -750,17 +721,16 @@ function openModal(pi, dk, entry, forceTarde=false) {
   else document.getElementById('m-sub').textContent = '';
 
   document.getElementById('f-person').value  = pi ?? 0;
-  document.getElementById('f-start').value   = dk || (entry ? entry.dateStart : todayDk());
-  document.getElementById('f-end').value     = dk || (entry ? entry.dateEnd   : todayDk());
+  document.getElementById('f-start').value   = entry ? entry.dateStart : (dk || todayDk());
+  document.getElementById('f-end').value     = entry ? entry.dateEnd   : (dk || todayDk());
   document.getElementById('f-label-0').value = entry ? (entry.label  || '') : '';
   document.getElementById('f-label-1').value = entry ? (entry.label2 || '') : '';
+  document.getElementById('f-notes').value   = entry ? (entry.notes  || '') : '';
 
   buildTypeGrid(0);
   buildTypeGrid(1);
 
-  // Reset tarde panel state first
   clearTarde();
-  // Then open it if the entry already has a type2, or if forced
   if ((entry && entry.type2) || forceTarde) {
     if (forceTarde && !selType[1]) selType[1] = 'work';
     buildTypeGrid(1);
@@ -780,6 +750,7 @@ function saveEntry() {
   const end    = document.getElementById('f-end').value || start;
   const label  = document.getElementById('f-label-0').value.trim();
   const label2 = document.getElementById('f-label-1').value.trim();
+  const notes  = document.getElementById('f-notes').value.trim();
   if (!start) { alert('Escolhe uma data.'); return; }
   if (editId) entries = entries.filter(e => e.id!==editId);
   datesInRange(start, end).forEach(d => removeForDay(pi, d));
@@ -788,7 +759,7 @@ function saveEntry() {
     dateStart: start, dateEnd: end,
     type: selType[0] || 'work',
     type2: selType[1] || null,
-    label, label2
+    label, label2, notes
   });
   save(); closeModal(); render();
 }
@@ -796,14 +767,10 @@ function saveEntry() {
 // ── Modal drag ─────────────────────────────────────────────────────
 (function() {
   let dragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
-  let modalX = 0, modalY = 0; // offset from centre
-
-  function getModal()   { return document.getElementById('modal'); }
-  function getOverlay() { return document.getElementById('overlay'); }
+  let modalX = 0, modalY = 0;
 
   function applyPos() {
-    const m = getModal();
-    m.style.transform = `translate(${modalX}px, ${modalY}px)`;
+    document.getElementById('modal').style.transform = `translate(${modalX}px, ${modalY}px)`;
   }
 
   document.addEventListener('mousedown', e => {
@@ -814,20 +781,13 @@ function saveEntry() {
     origX  = modalX;    origY  = modalY;
     document.body.style.userSelect = 'none';
   });
-
   document.addEventListener('mousemove', e => {
     if (!dragging) return;
     modalX = origX + (e.clientX - startX);
     modalY = origY + (e.clientY - startY);
     applyPos();
   });
-
-  document.addEventListener('mouseup', () => {
-    dragging = false;
-    document.body.style.userSelect = '';
-  });
-
-  // Touch support
+  document.addEventListener('mouseup', () => { dragging = false; document.body.style.userSelect = ''; });
   document.addEventListener('touchstart', e => {
     const handle = document.getElementById('modal-drag-handle');
     if (!handle || !handle.contains(e.target)) return;
@@ -835,17 +795,13 @@ function saveEntry() {
     startX = e.touches[0].clientX; startY = e.touches[0].clientY;
     origX  = modalX;               origY  = modalY;
   }, {passive:true});
-
   document.addEventListener('touchmove', e => {
     if (!dragging) return;
     modalX = origX + (e.touches[0].clientX - startX);
     modalY = origY + (e.touches[0].clientY - startY);
     applyPos();
   }, {passive:true});
-
   document.addEventListener('touchend', () => { dragging = false; });
-
-  // Reset position when modal opens
   window._resetModalPos = function() { modalX = 0; modalY = 0; applyPos(); };
 })();
 
@@ -854,8 +810,6 @@ function overlayClick(e) {
 }
 
 // ── Init ───────────────────────────────────────────────────────────
-// Firebase module calls _loadFromFirebase (online) or _localFallbackInit (offline).
-// Neither path runs until the module resolves, so no race condition.
 window._localFallbackInit = function() {
   load();
   if (entries.length === 0) prepopulate();
@@ -864,3 +818,4 @@ window._localFallbackInit = function() {
 </script>
 </body>
 </html>
+
