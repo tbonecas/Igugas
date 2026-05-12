@@ -12,7 +12,7 @@
   --s-rest-bg:#FEF9C3;--s-rest-bd:#FDE047;--s-rest-tx:#854D0E;--s-rest-solid:#EAB308;
   --s-vacation-bg:#FCE7F3;--s-vacation-bd:#F9A8D4;--s-vacation-tx:#9D174D;--s-vacation-solid:#EC4899;
   --s-study-bg:#FFEDD5;--s-study-bd:#FDBA74;--s-study-tx:#9A3412;--s-study-solid:#F97316;
-  --s-event-bg:#FEE2E2;--s-event-bd:#FCA5A5;--s-event-tx:#991B1B;--s-event-solid:#EF4444;
+  --s-event-bg:#FFF1F2;--s-event-bd:#FB7185;--s-event-tx:#9F1239;--s-event-solid:#E11D48;
   --bg:#F3F4F6;--surface:#fff;--border:#E5E7EB;--border2:#D1D5DB;
   --text:#111827;--muted:#6B7280;--orange:#F97316;
   --cell-h:72px;--cell-w:90px;--label-w:114px;
@@ -151,9 +151,39 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .modal-drag-handle{height:22px;margin:-24px -24px 14px -24px;border-radius:14px 14px 0 0;background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:grab;user-select:none;flex-shrink:0}
 .modal-drag-handle:active{cursor:grabbing}
 .modal-drag-pip{width:36px;height:4px;border-radius:2px;background:var(--border2)}
+/* ── LOGIN SCREEN ── */
+.login-screen{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;align-items:center;justify-content:center}
+.login-box{background:var(--surface);border-radius:20px;padding:40px 36px;width:340px;max-width:90vw;box-shadow:0 8px 40px rgba(0,0,0,.12);text-align:center;display:flex;flex-direction:column;align-items:center;gap:0}
+.login-logo{font-family:'DM Serif Display',serif;font-size:36px;letter-spacing:-.5px;margin-bottom:4px}
+.login-logo b{color:var(--orange);font-weight:400}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+.login-input-wrap{position:relative;width:100%;margin-bottom:12px}
+.login-input{width:100%;padding:12px 44px 12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:18px;font-family:inherit;color:var(--text);outline:none;text-align:center;letter-spacing:4px;transition:border-color .15s;background:#fff}
+.login-input:focus{border-color:var(--orange)}
+.login-input.shake{animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.login-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--muted);font-size:16px;user-select:none}
+.login-btn{width:100%;padding:12px;border-radius:10px;background:var(--text);color:#fff;border:none;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s;margin-bottom:0}
+.login-btn:hover{background:#374151}
+.login-err{font-size:12px;color:#EF4444;margin-top:8px;min-height:18px;transition:opacity .2s}
+.login-err.hidden{opacity:0}
 </style>
-</head>
 <body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">IGugas<b>.</b></div>
+    <div class="login-sub">Calendário da família</div>
+    <div class="login-input-wrap">
+      <input class="login-input" type="password" id="login-input" placeholder="••••" maxlength="20"
+        onkeydown="if(event.key==='Enter')doLogin()">
+      <span class="login-eye" id="login-eye" onclick="togglePwd()">👁</span>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-err hidden" id="login-err">Palavra-passe incorreta</div>
+  </div>
+</div>
 
 <!-- HEADER -->
 <div class="hdr">
@@ -222,11 +252,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
     <!-- MANHÃ — always shown -->
     <div class="fg">
-      <label class="fl">Etiqueta — Manhã</label>
+      <label class="fl">Tipo — Manhã</label>
       <div class="type-row" id="type-row-0"></div>
     </div>
     <div class="fg">
-      <label class="fl">Descritivo</label>
+      <label class="fl">Etiqueta</label>
       <input type="text" class="fi" id="f-label-0" placeholder="Ex: Remoto Lisboa, Reunião… (opcional)">
     </div>
 
@@ -239,11 +269,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       </button>
       <div id="tarde-panel" style="display:none">
         <div class="fg" style="margin-bottom:10px">
-          <label class="fl">Etiqueta — Tarde</label>
+          <label class="fl">Tipo — Tarde</label>
           <div class="type-row" id="type-row-1"></div>
         </div>
         <div class="fg">
-          <label class="fl">Descritivo tarde</label>
+          <label class="fl">Etiqueta tarde</label>
           <input type="text" class="fi" id="f-label-1" placeholder="Ex: Evento, Férias… (opcional)">
         </div>
       </div>
@@ -530,9 +560,10 @@ function renderMonth(g) {
 
   let head = `<div class="month-head-row"><div class="h-corner"></div>`;
   weeks.forEach((wk, wi) => {
+    const isFirst = wi === 0, isLast = wi === weeks.length - 1;
     if (wi>0) head += `<div class="week-sep" style="align-self:stretch"></div>`;
     head += `<div class="week-group">`;
-    buildSlots(wk).forEach(day => {
+    buildSlots(wk, isFirst, isLast).forEach(day => {
       if (!day) {
         head += `<div class="dhead" style="visibility:hidden"><div class="dhead-name">—</div><div class="dhead-num">—</div></div>`;
       } else {
@@ -552,9 +583,10 @@ function renderMonth(g) {
     body += `<div class="person-row">`;
     body += `<div class="plabel"><div class="avatar" style="background:${p.ac};color:${p.at}">${p.init}</div><div class="pname">${p.name}</div></div>`;
     weeks.forEach((wk, wi) => {
+      const isFirst = wi === 0, isLast = wi === weeks.length - 1;
       if (wi>0) body += `<div class="week-sep"></div>`;
       body += `<div class="week-group">`;
-      buildSlots(wk).forEach(day => {
+      buildSlots(wk, isFirst, isLast).forEach(day => {
         if (!day) {
           body += `<div class="dcell" style="background:var(--bg);cursor:default;pointer-events:none"></div>`;
           return;
@@ -571,11 +603,35 @@ function renderMonth(g) {
   body += `</div>`;
 
   g.innerHTML = `<div class="month-table">${head}${body}</div>`;
+
+  // Scroll horizontally so today's column is visible
+  requestAnimationFrame(() => {
+    const calWrap = document.querySelector('.cal-wrap');
+    const todayHead = g.querySelector('.dhead.is-today');
+    if (calWrap && todayHead) {
+      const wrapRect = calWrap.getBoundingClientRect();
+      const headRect = todayHead.getBoundingClientRect();
+      const scrollLeft = calWrap.scrollLeft + headRect.left - wrapRect.left - wrapRect.width / 2 + headRect.width / 2;
+      calWrap.scrollTo({ left: Math.max(0, scrollLeft), behavior: 'smooth' });
+    }
+  });
 }
 
-function buildSlots(wk) {
+function buildSlots(wk, isFirst, isLast) {
   const slots = new Array(7).fill(null);
   wk.forEach(day => { slots[monDay(day.jsDay)] = day; });
+  // Trim leading nulls on first week (e.g. May starts on Friday → no Mon-Thu)
+  if (isFirst) {
+    let start = 0;
+    while (start < slots.length && slots[start] === null) start++;
+    return slots.slice(start);
+  }
+  // Trim trailing nulls on last week
+  if (isLast) {
+    let end = slots.length - 1;
+    while (end >= 0 && slots[end] === null) end--;
+    return slots.slice(0, end + 1);
+  }
   return slots;
 }
 
@@ -724,7 +780,6 @@ function openModal(pi, dk, entry, forceTarde=false) {
   document.getElementById('f-start').value   = entry ? entry.dateStart : (dk || todayDk());
   document.getElementById('f-end').value     = entry ? entry.dateEnd   : (dk || todayDk());
   document.getElementById('f-label-0').value = entry ? (entry.label  || '') : '';
-  document.getElementById('f-label-1').value = entry ? (entry.label2 || '') : '';
   document.getElementById('f-notes').value   = entry ? (entry.notes  || '') : '';
 
   buildTypeGrid(0);
@@ -736,6 +791,8 @@ function openModal(pi, dk, entry, forceTarde=false) {
     buildTypeGrid(1);
     openTarde();
   }
+  // Set label2 AFTER clearTarde() so it doesn't get wiped
+  document.getElementById('f-label-1').value = entry ? (entry.label2 || '') : '';
 
   document.getElementById('overlay').style.display = 'flex';
   if (window._resetModalPos) window._resetModalPos();
@@ -809,6 +866,39 @@ function overlayClick(e) {
   if (e.target === document.getElementById('overlay')) closeModal();
 }
 
+// ── Login ───────────────────────────────────────────────────────────
+const PWD = '1904';
+
+function doLogin() {
+  const val = document.getElementById('login-input').value;
+  if (val === PWD) {
+    sessionStorage.setItem('igugas_auth', '1');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('login-input').value = '';
+  } else {
+    const inp = document.getElementById('login-input');
+    const err = document.getElementById('login-err');
+    inp.classList.remove('shake');
+    void inp.offsetWidth; // reflow to restart animation
+    inp.classList.add('shake');
+    err.classList.remove('hidden');
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('shake'), 400);
+  }
+}
+
+function togglePwd() {
+  const inp = document.getElementById('login-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+// Check session on load — if already authenticated, skip login screen
+if (sessionStorage.getItem('igugas_auth') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+} else {
+  setTimeout(() => document.getElementById('login-input').focus(), 100);
+}
+
 // ── Init ───────────────────────────────────────────────────────────
 window._localFallbackInit = function() {
   load();
@@ -818,4 +908,3 @@ window._localFallbackInit = function() {
 </script>
 </body>
 </html>
-
